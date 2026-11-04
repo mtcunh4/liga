@@ -62,9 +62,9 @@ A Vercel cria sozinha as variáveis de conexão (`DATABASE_URL` e outras).
 
 1. Ainda em **Storage**, clique em **Create Database** de novo e escolha **Blob**.
 2. Em **Name**, escreva `liga-arquivos`. Se aparecer a opção de acesso, escolha **Private**. Clique em **Create**.
-3. Confirme a ligação com o projeto `liga`, com os três ambientes, e clique em **Connect**.
+3. Confirme a ligação com o projeto `liga` (em **Projects** ou **Connections**, o `liga` precisa aparecer na lista).
 
-Os arquivos ficam privados: só abrem pelo painel (ou pelo link de consulta), depois que o sistema confere o acesso.
+A Vercel cria sozinha as variáveis `BLOB_STORE_ID` e `BLOB_WEBHOOK_PUBLIC_KEY`; não é preciso copiar chave nenhuma. **Não clique em "Revoke Token"** nessa tela. Os arquivos ficam privados: só abrem pelo painel (ou pelo link de consulta), depois que o sistema confere o acesso.
 
 ---
 

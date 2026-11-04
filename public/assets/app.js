@@ -101,14 +101,14 @@ const rpc = (nome, args) => postJSON("/api/rpc/" + nome, args);
 const fnUsuarios = (body) => postJSON("/api/usuarios", body);
 // endereço para abrir (ou baixar, com nome) um mapa ou arquivo; o servidor confere o acesso
 const urlArquivo = (bucket, path, nome) => `/api/arquivo/${bucket}/${path.split("/").map(encodeURIComponent).join("/")}${nome ? "?baixar=" + encodeURIComponent(nome) : ""}`;
-// envia um arquivo: na Vercel, direto ao Blob com autorização de uso único; no computador, para a pasta local
+// envia um arquivo: na Vercel, direto ao Blob com endereço assinado de uso único; no computador, para a pasta local
 async function enviarArquivo(bucket, path, f){
   const prep = await postJSON("/api/upload", {bucket, path, tipo: f.type || "application/octet-stream", tamanho: f.size});
   if (prep.modo === "local"){
     const fd = new FormData(); fd.append("bucket", bucket); fd.append("path", path); fd.append("arquivo", f);
     return pedir("/api/upload/local", {method:"POST", body: fd});
   }
-  try { await window.LigaBlob.put(prep.pathname, f, {access:"private", token:prep.token, contentType: f.type || "application/octet-stream", multipart: f.size > 8*1024*1024}); }
+  try { await window.LigaBlob.uploadPresigned(prep.pathname, f, {access:"private", handleUploadUrl:"/api/upload/blob", contentType: f.type || "application/octet-stream"}); }
   catch { throw new Error("Não consegui enviar o arquivo. Confira a conexão e tente de novo."); }
 }
 async function sair(){

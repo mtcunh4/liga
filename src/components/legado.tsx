@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { VERSAO } from "@/lib/versao";
 
 declare global {
-  interface Window { __ligaTela?: string; LigaBlob?: { put: unknown } }
+  interface Window { __ligaTela?: string; LigaBlob?: { uploadPresigned: unknown } }
 }
 
 function carregar(src: string) {
@@ -28,8 +28,8 @@ export function Legado({ html, scripts, blob = false }: { html: string; scripts:
     (async () => {
       if (blob) {
         // envio de mapas e plantas direto ao Vercel Blob
-        const { put } = await import("@vercel/blob/client");
-        window.LigaBlob = { put };
+        const { uploadPresigned } = await import("@vercel/blob/client");
+        window.LigaBlob = { uploadPresigned };
       }
       for (const s of scripts) await carregar(s);
     })().catch((e) => console.error("Não consegui carregar", e));

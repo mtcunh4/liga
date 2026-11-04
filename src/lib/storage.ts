@@ -1,13 +1,14 @@
 import { promises as fs } from "fs";
 import path from "path";
-import { del as blobDel, get as blobGet } from "@vercel/blob";
-import { generateClientTokenFromReadWriteToken } from "@vercel/blob/client";
+import { del as blobDel, get as blobGet, issueSignedToken } from "@vercel/blob";
+import { comUsuario } from "./db";
 
 /**
  * Mapas e arquivos (plantas, memoriais…), sempre privados.
- *  - "blob": Vercel Blob, usado na Vercel. O navegador envia o arquivo direto ao Blob com uma
- *    autorização de uso único (sem o limite de 4,5 MB das funções); o download passa pelo servidor,
- *    depois da conferência de acesso feita no banco.
+ *  - "blob": Vercel Blob, usado na Vercel. A ligação do Blob com o projeto cria BLOB_STORE_ID
+ *    (autenticação OIDC, sem chave) ou, nas ligações antigas, BLOB_READ_WRITE_TOKEN. O navegador
+ *    envia o arquivo direto ao Blob com um endereço assinado de uso único (sem o limite de 4,5 MB
+ *    das funções); o download passa pelo servidor, depois da conferência de acesso feita no banco.
  *  - "local": pasta no disco, fora de /public. Usado no computador para testes.
  */
 export const BUCKETS = ["mapas", "arquivos"] as const;
@@ -21,7 +22,7 @@ export const ehBucket = (b: string): b is Bucket => (BUCKETS as readonly string[
 
 export type StorageMode = "blob" | "local";
 export function storageMode(): StorageMode {
-  if (process.env.BLOB_READ_WRITE_TOKEN) return "blob";
+  if (process.env.BLOB_STORE_ID || process.env.BLOB_READ_WRITE_TOKEN) return "blob";
   if (process.env.VERCEL) throw new Error("Armazenamento não configurado: conecte um Vercel Blob ao projeto (Storage → Blob) e publique de novo.");
   return "local";
 }
@@ -31,18 +32,27 @@ const chave = (b: Bucket, p: string) => {
   return `${b}/${p}`;
 };
 
-/** Autorização para o navegador enviar um único arquivo, válida por 10 minutos. */
-export async function tokenDeEnvio(b: Bucket, p: string, tipo: string) {
-  const pathname = chave(b, p);
-  const token = await generateClientTokenFromReadWriteToken({
-    pathname,
-    allowedContentTypes: [tipo || "application/octet-stream"],
+/** Só o administrador envia, e só para empreendimentos que ele pode editar (conferido no banco). */
+export async function podeEnviar(uid: string, p: string) {
+  const emp = p.split("/")[0];
+  return !!(await comUsuario(uid, async (c) => (await c.query("select public.pode_editar_emp($1) as ok", [emp])).rows[0]?.ok));
+}
+
+/** Separa "mapas/<emp>/<arquivo>" em compartimento e caminho; null se não for válido. */
+export function separar(pathname: string): { bucket: Bucket; path: string } | null {
+  const i = pathname.indexOf("/");
+  const b = pathname.slice(0, i), p = pathname.slice(i + 1);
+  return i > 0 && ehBucket(b) && pathValido(p) ? { bucket: b, path: p } : null;
+}
+
+/** Autorização para enviar um único arquivo a este endereço, válida por 10 minutos. */
+export function autorizarEnvio(b: Bucket, p: string) {
+  return issueSignedToken({
+    pathname: chave(b, p),
+    operations: ["put"],
     maximumSizeInBytes: LIMITE_MB[b] * 1024 * 1024,
     validUntil: Date.now() + 10 * 60_000,
-    addRandomSuffix: false,
-    allowOverwrite: false,
   });
-  return { pathname, token };
 }
 
 const ROOT = path.resolve(process.env.UPLOAD_DIR ?? "./storage/uploads");

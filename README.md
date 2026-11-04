@@ -37,7 +37,7 @@ navegador ──► Next.js (Vercel) ──► funções do banco (Neon) ──�
 - **Regras de acesso no banco.** Toda leitura e gravação passa por funções do PostgreSQL (`prisma/migrations/*/migration.sql`) que conferem quem está logado com `_exigir(...)`. O servidor só informa o usuário da sessão (`set_config('app.uid', ...)`, lido por `auth.uid()`).
 - **Chamadas do painel.** `POST /api/rpc/<função>` com os parâmetros em JSON. Só as funções listadas em `src/lib/funcoes.ts` podem ser chamadas; as internas (`_*`, `srv_*`, `pode_*`) não.
 - **Usuários e senhas.** `POST /api/usuarios` (criar, alterar, gerar senha temporária de 72 horas, excluir; só administrador) e `POST /api/senha` (troca de senha). Senhas guardadas com bcrypt em `perfis.senha_hash`.
-- **Arquivos.** `POST /api/upload` prepara o envio (autorização de uso único do Blob); `GET /api/arquivo/<mapas|arquivos>/<caminho>` entrega depois de `arquivo_permitido(...)`.
+- **Arquivos.** `POST /api/upload` confere a permissão; o navegador envia direto ao Blob com um endereço assinado de uso único (`/api/upload/blob`); `GET /api/arquivo/<mapas|arquivos>/<caminho>` entrega depois de `arquivo_permitido(...)`.
 - **Consulta sem login.** `/consulta#<código>` usa `POST /api/consulta`; só o resumo SHA-256 do código fica no banco.
 - **Telas.** O comportamento das telas está em `public/assets/*.js` (JavaScript sem framework, o mesmo do painel original) e a marcação em `src/legado/telas.ts`. As páginas em `src/app` só carregam esses arquivos. Bibliotecas (gráficos, PDF, Excel) ficam em `public/vendor`, sem depender de sites externos.
 
@@ -66,7 +66,7 @@ npx prisma db seed
 npm run dev
 ```
 
-Sem `BLOB_READ_WRITE_TOKEN`, os mapas e plantas vão para `./storage/uploads`.
+Sem `BLOB_STORE_ID` (ou `BLOB_READ_WRITE_TOKEN`), os mapas e plantas vão para `./storage/uploads`.
 
 ## Mudanças
 
