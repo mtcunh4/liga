@@ -1,0 +1,150 @@
+// Tabelas do banco do LIGA, lidas do banco com `npx prisma db pull`. A estrutura e as funções com as
+// regras de acesso ficam nas migrações (prisma/migrations); mude o banco sempre por uma migração nova.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+  runtime      = "nodejs"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["privado", "public"]
+}
+
+model config {
+  key   String @id
+  value String
+
+  @@schema("privado")
+}
+
+model acessos {
+  id      BigInt   @id @default(autoincrement())
+  at      DateTime @default(now()) @db.Timestamptz(6)
+  user_id String?  @db.Uuid
+  email   String?
+  evento  String
+  detalhe String?
+
+  @@index([at(sort: Desc)], map: "acessos_at")
+  @@schema("public")
+}
+
+model arquivos {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  emp_id       String
+  nome         String
+  categoria    String   @default("Outro")
+  path         String   @unique
+  tamanho      BigInt?
+  mime         String?
+  anexo_tabela Boolean  @default(false)
+  criado_em    DateTime @default(now()) @db.Timestamptz(6)
+  criado_por   String?  @db.Uuid
+  emps         emps     @relation(fields: [emp_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([emp_id], map: "arquivos_emp")
+  @@schema("public")
+}
+
+model emps {
+  id             String      @id
+  nome           String
+  cidade         String      @default("")
+  empreendedor   String      @default("")
+  pos            Json        @default("{}")
+  marker_r       Float?      @db.Real
+  mapa_path      String?
+  mapa_w         Int?
+  mapa_h         Int?
+  fonte_em       DateTime?   @db.Timestamptz(6)
+  criado_em      DateTime    @default(now()) @db.Timestamptz(6)
+  tabela_desde   DateTime?   @db.Timestamptz(6)
+  tabela_versoes Json        @default("[]")
+  sigla          String      @default("")
+  planos         Json        @default("[]")
+  comissao_div   Json        @default("[]")
+  arquivos       arquivos[]
+  lotes          lotes[]
+  user_emps      user_emps[]
+
+  @@schema("public")
+}
+
+model lote_eventos {
+  id      BigInt   @id @default(autoincrement())
+  at      DateTime @default(now()) @db.Timestamptz(6)
+  emp_id  String
+  k       String
+  user_id String?  @db.Uuid
+  email   String?
+  evento  String
+  detalhe String?
+
+  @@index([emp_id, k, at(sort: Desc)], map: "lote_eventos_lote")
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model lotes {
+  emp_id        String
+  k             String
+  q             String
+  l             String
+  a             Decimal?  @db.Decimal
+  vt            Decimal?  @db.Decimal
+  t             String    @default("")
+  s             String    @default("disp")
+  mv            String    @default("")
+  pl            String    @default("")
+  corretor_id   String?   @db.Uuid
+  corretor_nome String    @default("")
+  d             DateTime? @db.Date
+  vv            Decimal?  @db.Decimal
+  reserva_ate   DateTime? @db.Timestamptz(6)
+  ct            Boolean   @default(false)
+  ep            Boolean   @default(false)
+  nf            String    @default("")
+  dnf           DateTime? @db.Date
+  pago          Boolean   @default(false)
+  dp            DateTime? @db.Date
+  alterado_em   DateTime? @db.Timestamptz(6)
+  alterado_por  String?
+  perfis        perfis?   @relation(fields: [corretor_id], references: [user_id], onUpdate: NoAction)
+  emps          emps      @relation(fields: [emp_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([emp_id, k])
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model perfis {
+  user_id       String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email         String      @unique
+  nome          String
+  role          String
+  all_emps      Boolean     @default(true)
+  ativo         Boolean     @default(true)
+  must_change   Boolean     @default(true)
+  criado_em     DateTime    @default(now()) @db.Timestamptz(6)
+  ultimo_acesso DateTime?   @db.Timestamptz(6)
+  senha_expira  DateTime?   @db.Timestamptz(6)
+  senha_hash    String?
+  lotes         lotes[]
+  user_emps     user_emps[]
+
+  @@schema("public")
+}
+
+model user_emps {
+  user_id String @db.Uuid
+  emp_id  String
+  emps    emps   @relation(fields: [emp_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  perfis  perfis @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([user_id, emp_id])
+  @@index([emp_id], map: "user_emps_emp")
+  @@schema("public")
+}
