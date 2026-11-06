@@ -122,6 +122,13 @@ body.login{min-height:100vh;background:var(--brand)}
 .login-card form{display:flex;flex-direction:column;gap:12px}
 .login-card h1{font-size:24px;margin-bottom:4px}
 .login-card input{padding:10px 12px;font-size:14.5px}
+/* campo de senha com o olhinho (mostrar/ocultar) */
+.senha-campo{position:relative;display:flex}
+.senha-campo input{flex:1;width:100%;padding-right:44px!important}
+.senha-campo .olho{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:36px;height:36px;padding:0;border:0;background:transparent;color:var(--muted);display:grid;place-items:center;cursor:pointer;border-radius:6px;box-shadow:none;min-height:0}
+.senha-campo .olho:hover{color:var(--ink)}
+.senha-campo .olho:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+.senha-campo .olho svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .erro{color:var(--danger);font-weight:550;margin:14px 0 0;font-size:13px}
 .erro.ok{color:var(--ok)}
 
