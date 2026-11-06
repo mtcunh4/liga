@@ -6,7 +6,7 @@ Painel web, com login, da LIGA Lançamentos Imobiliários: disponibilidade dos l
 
 | | |
 |---|---|
-| Versão | 2.0.0 (04/11/2026), em `src/lib/versao.ts` e `package.json` |
+| Versão | 2.1.0 (06/11/2026), em `src/lib/versao.ts` e `package.json` |
 | Site e servidor | Next.js 14 na Vercel (região São Paulo, `gru1`) |
 | Banco | PostgreSQL no Neon, com migrações do Prisma |
 | Login | NextAuth (e-mail e senha, sessão de 8 horas) |
@@ -37,6 +37,7 @@ navegador ──► Next.js (Vercel) ──► funções do banco (Neon) ──�
 - **Regras de acesso no banco.** Toda leitura e gravação passa por funções do PostgreSQL (`prisma/migrations/*/migration.sql`) que conferem quem está logado com `_exigir(...)`. O servidor só informa o usuário da sessão (`set_config('app.uid', ...)`, lido por `auth.uid()`).
 - **Chamadas do painel.** `POST /api/rpc/<função>` com os parâmetros em JSON. Só as funções listadas em `src/lib/funcoes.ts` podem ser chamadas; as internas (`_*`, `srv_*`, `pode_*`) não.
 - **Usuários e senhas.** `POST /api/usuarios` (criar, alterar, gerar senha temporária de 72 horas, excluir; só administrador) e `POST /api/senha` (troca de senha). Senhas guardadas com bcrypt em `perfis.senha_hash`.
+- **Esqueceu a senha?** `POST /api/senha/esqueci`, sem login. `pedir` manda por e-mail (Gmail, variáveis `GMAIL_USER` e `GMAIL_SENHA_APP`) um link `/entrar#redefinir=<código>` de uso único que vale 2 horas (no máximo 3 pedidos por e-mail por hora; só o resumo SHA-256 do código fica em `senha_links`). `definir` grava a nova senha. Sem as variáveis do Gmail, a tela avisa para pedir uma senha temporária ao administrador.
 - **Arquivos.** `POST /api/upload` confere a permissão; o navegador envia direto ao Blob com um endereço assinado de uso único (`/api/upload/blob`); `GET /api/arquivo/<mapas|arquivos>/<caminho>` entrega depois de `arquivo_permitido(...)`.
 - **Consulta sem login.** `/consulta#<código>` usa `POST /api/consulta`; só o resumo SHA-256 do código fica no banco.
 - **Telas.** O comportamento das telas está em `public/assets/*.js` (JavaScript sem framework, o mesmo do painel original) e a marcação em `src/legado/telas.ts`. As páginas em `src/app` só carregam esses arquivos. Bibliotecas (gráficos, PDF, Excel) ficam em `public/vendor`, sem depender de sites externos.

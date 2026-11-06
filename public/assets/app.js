@@ -48,7 +48,7 @@ function permHTML(){
       <li><b>Sem login:</b> para quem só precisa ver disponibilidade, tabelas e plantas, use o link de consulta em Configurações.</li>
     </ul></details>`;
 }
-const EVENTS = {login:"Entrou", logout:"Saiu", login_falhou:"Tentativa de login recusada", senha_alterada:"Alterou a senha", instalacao:"Instalação do painel", usuario_criado:"Criou usuário", usuario_alterado:"Alterou usuário", usuario_excluido:"Excluiu usuário", senha_redefinida:"Gerou senha temporária", planilha_importada:"Atualizou a planilha", backup_importado:"Importou cópia de segurança", mapa_enviado:"Enviou mapa", empreendimento_excluido:"Excluiu empreendimento"};
+const EVENTS = {login:"Entrou", logout:"Saiu", login_falhou:"Tentativa de login recusada", senha_alterada:"Alterou a senha", instalacao:"Instalação do painel", usuario_criado:"Criou usuário", usuario_alterado:"Alterou usuário", usuario_excluido:"Excluiu usuário", senha_redefinida:"Gerou senha temporária", senha_link_pedido:"Pediu link para nova senha", senha_link_falhou:"Link de nova senha não enviado", senha_nova_link:"Criou nova senha pelo link do e-mail", planilha_importada:"Atualizou a planilha", backup_importado:"Importou cópia de segurança", mapa_enviado:"Enviou mapa", empreendimento_excluido:"Excluiu empreendimento"};
 const brl = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
 const n0 = new Intl.NumberFormat("pt-BR",{maximumFractionDigits:0});
 const n2 = new Intl.NumberFormat("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});

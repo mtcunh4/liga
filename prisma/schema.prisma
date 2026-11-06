@@ -133,6 +133,7 @@ model perfis {
   senha_expira  DateTime?   @db.Timestamptz(6)
   senha_hash    String?
   lotes         lotes[]
+  senha_links   senha_links[]
   user_emps     user_emps[]
 
   @@schema("public")
@@ -146,5 +147,17 @@ model user_emps {
 
   @@id([user_id, emp_id])
   @@index([emp_id], map: "user_emps_emp")
+  @@schema("public")
+}
+
+model senha_links {
+  hash      String    @id
+  user_id   String    @db.Uuid
+  expira    DateTime  @db.Timestamptz(6)
+  usado_em  DateTime? @db.Timestamptz(6)
+  criado_em DateTime  @default(now()) @db.Timestamptz(6)
+  perfis    perfis    @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([user_id], map: "senha_links_user")
   @@schema("public")
 }
