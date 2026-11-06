@@ -6,7 +6,7 @@ Painel web, com login, da LIGA Lançamentos Imobiliários: disponibilidade dos l
 
 | | |
 |---|---|
-| Versão | 2.1.0 (06/11/2026), em `src/lib/versao.ts` e `package.json` |
+| Versão | 2.1 (06/11/2026), em `src/lib/versao.ts` (em `package.json` fica 2.1.0, porque o npm exige três números) |
 | Site e servidor | Next.js 14 na Vercel (região São Paulo, `gru1`) |
 | Banco | PostgreSQL no Neon, com migrações do Prisma |
 | Login | NextAuth (e-mail e senha, sessão de 8 horas) |
@@ -72,5 +72,5 @@ Sem `BLOB_STORE_ID` (ou `BLOB_READ_WRITE_TOKEN`), os mapas e plantas vão para `
 ## Mudanças
 
 - **Banco:** nova pasta em `prisma/migrations/` com data e hora no nome (`AAAAMMDDHHMMSS_descricao/migration.sql`). Nunca edite uma migração já publicada. Funções novas chamadas pelo painel precisam conferir o perfil com `_exigir(...)` e entrar em `src/lib/funcoes.ts`. Depois de mudar tabelas, rode `npx prisma db pull` para atualizar `prisma/schema.prisma`.
-- **Versão:** a cada publicação, suba a versão e a data em `src/lib/versao.ts` e em `package.json`.
+- **Versão:** a cada publicação, suba a versão e a data em `src/lib/versao.ts` e em `package.json`. A versão que aparece no painel tem sempre dois números (2.1, 2.2, 2.3…), nunca três. Em `package.json` ela leva um `.0` no fim (2.2 → 2.2.0), porque o npm não aceita dois números.
 - **Nunca** grave chaves, senhas, planilhas ou cópias de segurança no repositório.
