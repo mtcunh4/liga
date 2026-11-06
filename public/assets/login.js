@@ -3,7 +3,28 @@
   // Tela de entrada: login (NextAuth, e-mail e senha) e troca de senha (temporária ou quando a pessoa quiser).
   const $ = (s) => document.querySelector(s);
   const erro = $("#erro");
-  const show = (id) => { for (const f of ["#fEntrar", "#fSenha", "#fEsqueci", "#fEsqueciOk", "#fRedefinir"]) $(f).hidden = f !== id; erro.hidden = true; erro.classList.remove("ok"); const first = $(id + " input"); if (first) first.focus(); };
+  // Olhinho nos campos de senha: mostra ou esconde o que está sendo digitado
+  const OLHO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const OLHO_FECHADO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+  const senhaVisivel = (inp, b, ver) => {
+    inp.type = ver ? "text" : "password";
+    b.innerHTML = ver ? OLHO_FECHADO : OLHO;
+    b.setAttribute("aria-label", ver ? "Ocultar senha" : "Mostrar senha");
+    b.title = ver ? "Ocultar senha" : "Mostrar senha";
+    b.setAttribute("aria-pressed", String(ver));
+  };
+  const olhos = [];
+  for (const inp of document.querySelectorAll('input[type="password"]')) {
+    const caixa = document.createElement("span"); caixa.className = "senha-campo";
+    inp.parentNode.insertBefore(caixa, inp); caixa.appendChild(inp);
+    const b = document.createElement("button"); b.type = "button"; b.className = "olho";
+    senhaVisivel(inp, b, false);
+    b.addEventListener("click", (ev) => { ev.preventDefault(); senhaVisivel(inp, b, inp.type === "password"); inp.focus(); });
+    caixa.appendChild(b); olhos.push([inp, b]);
+  }
+  const esconderSenhas = () => { for (const [inp, b] of olhos) senhaVisivel(inp, b, false); };
+
+  const show = (id) => { esconderSenhas(); for (const f of ["#fEntrar", "#fSenha", "#fEsqueci", "#fEsqueciOk", "#fRedefinir"]) $(f).hidden = f !== id; erro.hidden = true; erro.classList.remove("ok"); const first = $(id + " input"); if (first) first.focus(); };
   const err = (m) => { erro.textContent = m; erro.hidden = false; erro.classList.remove("ok"); };
   const aviso = (m) => { erro.textContent = m; erro.hidden = false; erro.classList.add("ok"); };
   const busy = (form, on) => { form.querySelector("button[type=submit]").disabled = on; };
@@ -37,7 +58,7 @@
   function modoTrocar() {
     $("#fSenha h1").textContent = "Trocar senha";
     $("#fSenha .note").textContent = "Digite a senha atual e escolha uma nova.";
-    $("#sAtual").parentElement.firstChild.textContent = "Senha atual";
+    $("#sAtual").closest("label").firstChild.textContent = "Senha atual";
     $("#voltar").hidden = false;
   }
   async function depoisDeEntrar() {

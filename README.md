@@ -6,7 +6,7 @@ Painel web, com login, da LIGA Lançamentos Imobiliários: disponibilidade dos l
 
 | | |
 |---|---|
-| Versão | 2.1 (06/11/2026), em `src/lib/versao.ts` (em `package.json` fica 2.1.0, porque o npm exige três números) |
+| Versão | 2.2 (06/11/2026), em `src/lib/versao.ts` (em `package.json` fica 2.2.0, porque o npm exige três números) |
 | Site e servidor | Next.js 14 na Vercel (região São Paulo, `gru1`) |
 | Banco | PostgreSQL no Neon, com migrações do Prisma |
 | Login | NextAuth (e-mail e senha, sessão de 8 horas) |
