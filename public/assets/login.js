@@ -3,8 +3,9 @@
   // Tela de entrada: login (NextAuth, e-mail e senha) e troca de senha (temporária ou quando a pessoa quiser).
   const $ = (s) => document.querySelector(s);
   const erro = $("#erro");
-  const show = (id) => { for (const f of ["#fEntrar", "#fSenha"]) $(f).hidden = f !== id; erro.hidden = true; const first = $(id + " input"); if (first) first.focus(); };
-  const err = (m) => { erro.textContent = m; erro.hidden = false; };
+  const show = (id) => { for (const f of ["#fEntrar", "#fSenha", "#fEsqueci", "#fEsqueciOk", "#fRedefinir"]) $(f).hidden = f !== id; erro.hidden = true; erro.classList.remove("ok"); const first = $(id + " input"); if (first) first.focus(); };
+  const err = (m) => { erro.textContent = m; erro.hidden = false; erro.classList.remove("ok"); };
+  const aviso = (m) => { erro.textContent = m; erro.hidden = false; erro.classList.add("ok"); };
   const busy = (form, on) => { form.querySelector("button[type=submit]").disabled = on; };
   { const cfg = window.PAINEL_CONFIG || {}; const v = $("#ver"); if (v && cfg.versao) v.textContent = `Versão ${cfg.versao} · ${cfg.versaoData}`; }
 
@@ -48,7 +49,12 @@
     location.replace("/");
   }
 
+  // link recebido por e-mail: /entrar#redefinir=<código>
+  const tokenRedef = (location.hash.match(/^#redefinir=([a-f0-9]{48})$/) || [])[1] || null;
+  addEventListener("hashchange", () => { if (/^#redefinir=/.test(location.hash)) location.reload(); });
+
   (async () => {
+    if (tokenRedef) { history.replaceState(null, "", location.pathname); await sair(); show("#fRedefinir"); return; }
     try { await depoisDeEntrar(); }
     catch (e) { show("#fEntrar"); err("Não consegui falar com o servidor. Confira sua conexão e recarregue a página."); }
   })();
@@ -75,6 +81,43 @@
     try {
       await postJSON("/api/senha", { atual: $("#sAtual").value, nova });
       location.replace("/");
+    } catch (e) { err(e.message); } finally { busy(ev.target, false); }
+  });
+
+  // ---------- esqueceu a senha ----------
+  for (const el of document.querySelectorAll(".voltar-entrar")) el.onclick = (ev) => { ev.preventDefault(); show("#fEntrar"); };
+  $("#irEsqueci").onclick = (ev) => { ev.preventDefault(); if ($("#eEmail").value) $("#qEmail").value = $("#eEmail").value.trim(); show("#fEsqueci"); };
+  // na tela "Trocar senha" (ou senha temporária), quem não lembra a senha atual pede o link
+  $("#senhaEsqueci").onclick = async (ev) => {
+    ev.preventDefault();
+    const p = await perfil().catch(() => null);
+    await sair();
+    $("#qEmail").value = (p && p.email) || $("#eEmail").value.trim();
+    $("#voltar").hidden = true; history.replaceState(null, "", location.pathname);
+    show("#fEsqueci");
+  };
+  $("#fEsqueci").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const email = $("#qEmail").value.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return err("Informe um e-mail válido.");
+    busy(ev.target, true);
+    try { await postJSON("/api/senha/esqueci", { acao: "pedir", email }); show("#fEsqueciOk"); }
+    catch (e) { err(e.message); } finally { busy(ev.target, false); }
+  });
+  $("#fRedefinir").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const nova = $("#dNova").value;
+    if (nova !== $("#dNova2").value) return err("As duas senhas não são iguais.");
+    if (nova.length < 6) return err("A senha precisa ter pelo menos 6 caracteres.");
+    if (nova.length > 72) return err("A senha pode ter no máximo 72 caracteres.");
+    busy(ev.target, true);
+    try {
+      const r = await postJSON("/api/senha/esqueci", { acao: "definir", token: tokenRedef, senha: nova });
+      show("#fEntrar");
+      if (r && r.email) $("#eEmail").value = r.email;
+      $("#eSenha").value = "";
+      aviso("Senha criada. Entre com o seu e-mail e a nova senha.");
+      $("#eSenha").focus();
     } catch (e) { err(e.message); } finally { busy(ev.target, false); }
   });
 })();
